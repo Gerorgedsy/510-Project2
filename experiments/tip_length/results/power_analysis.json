@@ -1,0 +1,55 @@
+{
+  "primary_length": {
+    "n_pilot": 50,
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "sesoi_ratio": 1.05,
+    "sesoi_log": 0.04879016416943205,
+    "pilot_mean_log_ratio": 0.03219565431409105,
+    "pilot_sd_log_ratio": 0.14541924301439887,
+    "sd_upper80_used_for_planning": 0.1598850849119777,
+    "aa_noise_sd_log_ratio": 0.045609972706103175,
+    "dz_planning": 0.3051576962059515,
+    "n_required_paired_t": 87,
+    "n_required_with_wilcoxon_margin": 101,
+    "n_main": 1319,
+    "power_at_n_main_for_sesoi": 1.0,
+    "pilot_observed_dz": 0.22139885785888155,
+    "power_at_n_main_for_pilot_effect": 0.9999999993798309
+  },
+  "secondary_accuracy_mcnemar": {
+    "pilot_discordant_share": 0.0,
+    "scenarios": [
+      {
+        "p_disc": 0.05,
+        "delta": 0.02,
+        "power_at_n_main": 0.902
+      },
+      {
+        "p_disc": 0.05,
+        "delta": 0.03,
+        "power_at_n_main": 0.998
+      },
+      {
+        "p_disc": 0.05,
+        "delta": 0.05,
+        "power_at_n_main": 1.0
+      },
+      {
+        "p_disc": 0.1,
+        "delta": 0.02,
+        "power_at_n_main": 0.632
+      },
+      {
+        "p_disc": 0.1,
+        "delta": 0.03,
+        "power_at_n_main": 0.932
+      },
+      {
+        "p_disc": 0.1,
+        "delta": 0.05,
+        "power_at_n_main": 1.0
+      }
+    ]
+  }
+}

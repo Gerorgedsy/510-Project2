@@ -1,0 +1,102 @@
+"""Score each answer and compute length / distractor-use measures for one stage.
+
+Grading rule (fixed on pilot data, before the main run):
+  * Take the number after the LAST 'Answer:' label. Markdown bold, '$' and LaTeX
+    '\\boxed{...}' around the label or the number are allowed.
+  * If there is no 'Answer:' label, fall back to the LAST '\\boxed{<number>}'.
+  * Remove commas; compare numerically with the GSM8K reference (same for both versions).
+  * Unparseable or truncated answers count as incorrect.
+Distractor use (exploratory): when the inserted sentence adds a new digit-number, does that
+number appear anywhere in the model's response? Measured on the distractor answer and, as a
+coincidence baseline, on the original answer (where the model never saw the number).
+
+Outputs:
+  data/processed/<stage>_long.csv   one row per (question, condition)
+  data/processed/<stage>_wide.csv   one row per question: correct_<cond>, tokens_<cond>, truncated_<cond>, ...
+
+Usage: python src/grade.py pilot|main
+"""
+
+import argparse
+import json
+import re
+
+import pandas as pd
+
+from config import STAGES, long_path, outputs_path, questions_path, wide_path
+
+# 'Answer:' / '**Answer:**' / '**Answer**:', then optional '**', '$', '\boxed{' before the number
+ANSWER_RE = re.compile(r"Answer\s*\**\s*:[\s*$]*(?:\\boxed\{)?[\s*$]*(-?[\d,]*\.?\d+)", re.IGNORECASE)
+BOXED_RE = re.compile(r"\\boxed\{\s*\$?\s*(-?[\d,]*\.?\d+)")
+NUMBER_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def extract_answer(response: str):
+    """Return the parsed final answer as a float, or None if unparseable."""
+    matches = ANSWER_RE.findall(response or "") or BOXED_RE.findall(response or "")
+    if not matches:
+        return None
+    try:
+        return float(matches[-1].replace(",", ""))
+    except ValueError:
+        return None
+
+
+def is_correct(pred, reference: str) -> bool:
+    if pred is None or pd.isna(pred):
+        return False
+    return abs(pred - float(reference)) < 1e-6
+
+
+def uses_numbers(response: str, numbers: str) -> bool:
+    """True if any of the ';'-separated numbers appears as a number in the response."""
+    wanted = {n for n in numbers.split(";") if n}
+    found = {n.replace(",", "") for n in NUMBER_RE.findall(response or "")}
+    return bool(wanted & found)
+
+
+def grade(stage: str) -> None:
+    questions = pd.read_csv(questions_path(stage), dtype={"reference_answer": str, "distractor_numbers": str}, keep_default_na=False)
+    with outputs_path(stage).open() as f:
+        outputs = pd.DataFrame([json.loads(line) for line in f])
+
+    df = outputs.merge(questions[["question_id", "reference_answer", "distractor_numbers"]], on="question_id")
+    df["predicted"] = df["response"].map(extract_answer)
+    df["parse_failed"] = df["predicted"].isna()
+    df["truncated"] = df["stop_reason"] == "length"
+    df["correct"] = [is_correct(p, r) and not t for p, r, t in zip(df["predicted"], df["reference_answer"], df["truncated"])]
+    df["tokens"] = df["n_output_tokens"]
+    df["uses_distractor_number"] = [uses_numbers(resp, nums) if nums else None for resp, nums in zip(df["response"], df["distractor_numbers"])]
+
+    long_path(stage).parent.mkdir(parents=True, exist_ok=True)
+    df.drop(columns=["prompt", "response"]).to_csv(long_path(stage), index=False)
+
+    wide = df.pivot(index="question_id", columns="condition", values=["correct", "tokens", "truncated"])
+    wide.columns = [f"{value}_{cond}" for value, cond in wide.columns]
+    wide = wide.dropna()  # keep questions answered under every condition
+    for col in wide.columns:
+        wide[col] = wide[col].astype(int if col.startswith("tokens_") else bool)
+    uses = df.pivot(index="question_id", columns="condition", values="uses_distractor_number")
+    extra = pd.DataFrame(
+        {
+            "has_distractor_number": questions.set_index("question_id")["distractor_numbers"] != "",
+            "uses_number_distractor": uses["distractor"],
+            "uses_number_original": uses["original"],  # coincidence baseline
+        }
+    )
+    wide = wide.join(extra).reset_index()
+    wide.to_csv(wide_path(stage), index=False)
+
+    print(f"[{stage}] graded {len(df)} answers; {len(wide)} questions complete under all conditions")
+    print(f"parse failures: {int(df['parse_failed'].sum())}; truncated at max_tokens: {int(df['truncated'].sum())}")
+    print(df.groupby("condition").agg(accuracy=("correct", "mean"), mean_tokens=("tokens", "mean")).round(3))
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("stage", choices=STAGES)
+    grade(parser.parse_args().stage)
+
+
+if __name__ == "__main__":
+    main()
