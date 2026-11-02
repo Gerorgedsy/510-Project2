@@ -1,6 +1,6 @@
-"""Settings and file paths shared by every script in this experiment folder.
+"""Settings and file paths shared by every script in this project.
 
-The only file read from outside this folder is the repo-root .env (TINKER_API_KEY).
+The API key is read from the repo-root .env (TINKER_API_KEY).
 Questions are the 1,319 GSM8K test problems paired with their GSM-Plus "distraction insertion"
 versions. A random N_PILOT of them form the pilot; the rest form the main study (no overlap).
 """
@@ -8,7 +8,7 @@ versions. A random N_PILOT of them form the pilot; the rest form the main study 
 from pathlib import Path
 
 EXP_DIR = Path(__file__).resolve().parents[1]
-REPO_ENV = EXP_DIR.parents[1] / ".env"
+REPO_ENV = EXP_DIR / ".env"
 
 DATA_RAW = EXP_DIR / "data" / "raw"
 DATA_PROCESSED = EXP_DIR / "data" / "processed"
