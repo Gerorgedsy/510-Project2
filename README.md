@@ -4,7 +4,7 @@ A self-contained experiment: all code, data, and results live in this repository
 
 ## Motivation
 
-Math word problems in the real world come with extra details that do not matter. A model that reasons, rather than pattern-matching on every number it sees, should ignore them. Earlier work found that large language models are easily distracted by irrelevant context (Shi et al., 2023; Mirzadeh et al., 2024), and the GSM-Plus benchmark (Li et al., 2024) includes a "distraction insertion" version of every GSM8K test problem. We test, with a paired and pre-registered design, whether one inserted, topic-related but irrelevant sentence lowers a small modern model's accuracy.
+Math word problems in the real world come with extra details that do not matter. A model that reasons, rather than pattern-matching on every number it sees, should ignore them. Earlier work found that large language models are easily distracted by irrelevant context (Shi et al., 2023; Mirzadeh et al., 2024), and the GSM-Plus benchmark (Li et al., 2024) includes a "distraction insertion" version of every GSM8K test problem. We test, with a paired design and an analysis plan fixed before the main run, whether one inserted, topic-related but irrelevant sentence lowers a small modern model's accuracy.
 
 ## Hypotheses
 
@@ -89,6 +89,7 @@ uv venv .venv --python 3.13 && uv pip install --python .venv/bin/python -r requi
 .venv/bin/python src/collect.py main       # 3,657 calls, ~10 min, ~$1.7 on Tinker; safe to rerun if interrupted
 .venv/bin/python src/grade.py main
 .venv/bin/python src/analyze.py main       # -> results/main/
+.venv/bin/python src/visualize.py          # -> results/figures/ (report and presentation figures)
 ```
 
 Tinker is not bit-for-bit deterministic even at temperature 0, so a rerun will reproduce the statistics but not every token. All raw outputs are saved in `data/raw/*_outputs.jsonl`.
@@ -107,14 +108,16 @@ Tinker is not bit-for-bit deterministic even at temperature 0, so a rerun will r
 │   ├── collect.py            # async, resumable data collection
 │   ├── grade.py              # answer extraction, correctness, length, distractor-number use
 │   ├── power_analysis.py     # McNemar sample-size justification from the pilot
-│   └── analyze.py            # all tests + figures
+│   ├── analyze.py            # all tests + figures
+│   └── visualize.py          # extra report/presentation figures
 ├── data/
 │   ├── raw/                  # question pairs + raw model outputs (jsonl)
 │   └── processed/            # graded long and wide tables
 └── results/
     ├── power_analysis.json
     ├── pilot/                # summary.json + figures
-    └── main/
+    ├── main/                 # summary.json + figures
+    └── figures/              # figures from src/visualize.py
 ```
 
 ## Planned limitations

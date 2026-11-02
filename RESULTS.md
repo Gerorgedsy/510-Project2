@@ -8,7 +8,7 @@ Main run on 2026-10-30. Numbers below come from `results/main/summary.json` (`py
 
 - 1,219 main-set problems (GSM8K test problems not used in the pilot) × 3 conditions = 3,657 calls; 0 failed requests.
 - `Qwen/Qwen3.5-4B` on Tinker, greedy decoding, thinking off, max 2,048 output tokens; call order shuffled across conditions.
-- 65 answers (1.8%) hit the token cap: 12 original, 39 distractor, 14 original_repeat. They were the only parse failures, and per the pre-registered rule they count as incorrect.
+- 65 answers (1.8%) hit the token cap: 12 original, 39 distractor, 14 original_repeat. They were the only parse failures, and per the rule fixed before the main run they count as incorrect.
 
 ## Descriptive statistics
 
@@ -35,7 +35,7 @@ Main run on 2026-10-30. Numbers below come from `results/main/summary.json` (`py
 - **Decision:** reject H₀. With the irrelevant sentence, the model answers correctly less often.
 - **Size:** of the 132 problems whose correctness changed, 99 (75%) went right → wrong and only 33 went wrong → right, a 3 : 1 ratio. Under H₀ the split would be 50 : 50. In absolute terms, 66 more problems were answered wrongly out of 1,219.
 - **Practical significance:** the whole 95% CI lies beyond the pre-specified smallest effect of interest (2 points).
-- **Assumptions:** McNemar's test needs paired binary outcomes and independent pairs. Each problem gives one pair, and problems are distinct GSM8K items answered in separate calls. The χ² approximation needs enough discordant pairs: there are 132, well above the pre-registered cut-off of 25, and the exact binomial version gives the same conclusion.
+- **Assumptions:** McNemar's test needs paired binary outcomes and independent pairs. Each problem gives one pair, and problems are distinct GSM8K items answered in separate calls. The χ² approximation needs enough discordant pairs: there are 132, well above the planned cut-off of 25, and the exact binomial version gives the same conclusion.
 - **Power check:** the observed discordant share was 10.8%, close to the pilot's 10% and below the conservative 13.4% used for planning. The observed effect (5.4 points) is larger than the pilot estimate (4 points), at which the planned power was 0.99.
 
 ### Sensitivity: without truncated answers
@@ -93,16 +93,26 @@ Examples from the main run (right with the original, wrong with the distractor):
 
 ## Correction to the grading code
 
-The pre-registered rule (README, `src/grade.py` docstring) counts truncated answers as incorrect. The first version of `grade.py` applied this only when no number could be parsed, so a truncated answer could still count as correct if it happened to contain the right `Answer:` number. We found this after the first main analysis, fixed the code to match the rule, and re-graded. The fix affected 2 truncated distractor answers. Before the fix: right → wrong 97, difference −5.3 points, p = 3.3 × 10⁻⁸. After the fix: right → wrong 99, difference −5.4 points, p = 1.5 × 10⁻⁸. The conclusion is unchanged, and the sensitivity analysis is unaffected because it drops truncated answers anyway. The pilot was also unaffected: its truncated answers had no parsable number.
+The grading rule fixed before the main run (README, `src/grade.py` docstring) counts truncated answers as incorrect. The first version of `grade.py` applied this only when no number could be parsed, so a truncated answer could still count as correct if it happened to contain the right `Answer:` number. We found this after the first main analysis, fixed the code to match the rule, and re-graded. The fix affected 2 truncated distractor answers. Before the fix: right → wrong 97, difference −5.3 points, p = 3.3 × 10⁻⁸. After the fix: right → wrong 99, difference −5.4 points, p = 1.5 × 10⁻⁸. The conclusion is unchanged, and the sensitivity analysis is unaffected because it drops truncated answers anyway. The pilot was also unaffected: its truncated answers had no parsable number.
 
 ## Figures (`results/main/`)
 
 - `discordant_pairs.png`: right → wrong vs wrong → right counts, distractor vs original against the A/A control. Recommended for the presentation: 99 vs 33 next to 3 vs 3 shows the effect and the noise floor in one picture.
 - `accuracy_by_condition.png`: accuracy per condition with Wilson 95% CIs. **Caution:** these are per-condition (unpaired) CIs. Read the paired McNemar test above for the comparison, not the overlap of the bars.
 
+### Additional figures (`results/figures/`, from `python src/visualize.py`)
+
+| Figure | What it shows |
+|---|---|
+| ![](results/figures/forest_plot.png) | **Forest plot.** Paired accuracy change with 95% CI for the primary analysis, the no-truncation sensitivity analysis, problems whose distractor does / does not add a new number, and the A/A control. Every distractor row lies left of the 2-point smallest effect of interest; the A/A row sits on 0. |
+| ![](results/figures/power_curve.png) | **Power curve.** McNemar power at n = 1,219 as a function of the true accuracy difference, for the pilot discordance (0.10) and its conservative 80% upper limit (0.134). Shows why the study is well powered for ≥ 3-point effects but not at the 2-point minimum, and where the observed 5.4-point effect falls. |
+| ![](results/figures/null_distribution.png) | **Null distribution.** If the sentence had no effect, the 132 discordant problems would split about 66 : 66 (Binomial(132, 0.5)). The observed 99 : 33 lies far in the tail; the shaded tails are the p-value. Useful for explaining McNemar's test in the presentation. |
+| ![](results/figures/flip_breakdown.png) | **Why problems flipped.** Of the 99 right → wrong problems, 24 were truncated at the token cap, 57 gave a wrong answer that mentions the distractor's new number, and 18 gave a wrong answer without it. Only 2 of the 33 wrong → right problems were original truncations. |
+| ![](results/figures/length_ratio_hist.png) | **Answer length.** Per-problem log length ratio, distractor vs original, against the A/A noise distribution. Answers are about 1.20× longer with the distractor; identical reruns cluster at 0. |
+
 ## Interpretation and limitations
 
-- One irrelevant but topic-related sentence nearly doubles a small modern model's error rate on grade-school math. This replicates, with a paired and pre-registered design, the distractibility reported by Shi et al. (2023), Mirzadeh et al. (2024), and Li et al. (2024).
+- One irrelevant but topic-related sentence nearly doubles a small modern model's error rate on grade-school math. This replicates, with a paired design and an analysis plan fixed in advance, the distractibility reported by Shi et al. (2023), Mirzadeh et al. (2024), and Li et al. (2024).
 - The drop has two routes: wrong reasoning (the model folds the extra information into the calculation, or reasons differently even when it dismisses it) and running out of tokens. The effect remains significant when the second route is removed.
 - Scope: one model (Qwen3.5-4B, thinking off), one task (GSM8K), one perturbation type (GSM-Plus "distraction insertion", written by the GSM-Plus authors). Larger models or thinking mode may be more robust.
 - Some distractors may be arguably relevant or ambiguous (e.g. #733: is a "$5 bag of lollipops" part of "the money"?). We did not audit all 1,219 by hand, so part of the effect may reflect ambiguous wording rather than pure distraction.
