@@ -1,0 +1,72 @@
+{
+  "n_pilot": 100,
+  "n_main": 1219,
+  "alpha": 0.05,
+  "target_power": 0.8,
+  "sesoi_accuracy_points": 0.02,
+  "pilot_accuracy_original": 0.94,
+  "pilot_accuracy_distractor": 0.9,
+  "pilot_only_original_correct": 7,
+  "pilot_only_distractor_correct": 3,
+  "pilot_discordant_share": 0.1,
+  "pilot_discordant_share_upper80": 0.1339930786175048,
+  "pilot_delta": -0.04,
+  "scenarios": [
+    {
+      "p_disc_source": "pilot",
+      "p_disc": 0.1,
+      "delta": 0.02,
+      "n_required": 1960,
+      "power_at_n_main": 0.598
+    },
+    {
+      "p_disc_source": "pilot",
+      "p_disc": 0.1,
+      "delta": 0.03,
+      "n_required": 870,
+      "power_at_n_main": 0.913
+    },
+    {
+      "p_disc_source": "pilot",
+      "p_disc": 0.1,
+      "delta": 0.04,
+      "n_required": 489,
+      "power_at_n_main": 0.993
+    },
+    {
+      "p_disc_source": "pilot",
+      "p_disc": 0.1,
+      "delta": 0.05,
+      "n_required": 312,
+      "power_at_n_main": 1.0
+    },
+    {
+      "p_disc_source": "pilot 80% upper limit",
+      "p_disc": 0.134,
+      "delta": 0.02,
+      "n_required": 2627,
+      "power_at_n_main": 0.479
+    },
+    {
+      "p_disc_source": "pilot 80% upper limit",
+      "p_disc": 0.134,
+      "delta": 0.03,
+      "n_required": 1167,
+      "power_at_n_main": 0.817
+    },
+    {
+      "p_disc_source": "pilot 80% upper limit",
+      "p_disc": 0.134,
+      "delta": 0.04,
+      "n_required": 655,
+      "power_at_n_main": 0.969
+    },
+    {
+      "p_disc_source": "pilot 80% upper limit",
+      "p_disc": 0.134,
+      "delta": 0.05,
+      "n_required": 419,
+      "power_at_n_main": 0.998
+    }
+  ]
+}
